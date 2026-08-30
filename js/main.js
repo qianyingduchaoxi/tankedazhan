@@ -2793,14 +2793,14 @@ class CanvasRenderer {
     this._drawDamageTextsAndBloodbars(ctx, W, H);
     // 引导提示（屏幕层由 CSS toast 负责，此处可以画一个小箭头示意）
   }
-  // 懒加载玩家自定义底图（东莞七中.jpg）；加载失败静默回落原科幻地板
+  // 懒加载玩家自定义底图（qizhong.jpg）；加载失败静默回落原科幻地板
   _getBgPhoto(){
     if (this._bgPhoto !== undefined) return this._bgPhoto;
     this._bgPhoto = null;
     const im = new Image();
     im.onload = ()=>{ this._bgPhoto = im; };
     im.onerror = ()=>{ this._bgPhoto = null; };
-    im.src = encodeURI('东莞七中.jpg');
+    im.src = encodeURI('qizhong.jpg');
     return null;
   }
   _drawBackground(ctx, W, H){
@@ -2808,7 +2808,7 @@ class CanvasRenderer {
     grd.addColorStop(0, '#0f1840');
     grd.addColorStop(1, '#05081a');
     ctx.fillStyle = grd; ctx.fillRect(0,0,W,H);
-    // 玩家自定义关卡底图（东莞七中.jpg，40% 透明度，cover 铺满；墙/水/草在其后绘制不受影响）
+    // 玩家自定义关卡底图（qizhong.jpg，40% 透明度，cover 铺满；墙/水/草在其后绘制不受影响）
     const bgImg = this._getBgPhoto();
     if (bgImg){
       const s = Math.max(W/bgImg.naturalWidth, H/bgImg.naturalHeight);
@@ -3502,10 +3502,10 @@ class ThreeRenderer {
     m.userData.$ground = true;
     this.scene.add(m);
 
-    // 玩家自定义关卡底图（东莞七中.jpg，40% 透明度）：薄照片层贴在地板之上、水面(y=0.05)之下
+    // 玩家自定义关卡底图（qizhong.jpg，40% 透明度）：薄照片层贴在地板之上、水面(y=0.05)之下
     const expectKey = this.game.gridN || GRID;
     try{
-      new THREE.TextureLoader().load(encodeURI('东莞七中.jpg'), (tex)=>{
+      new THREE.TextureLoader().load(encodeURI('qizhong.jpg'), (tex)=>{
         if (buildId !== this._groundBuildId) return;  // 地面已重建，丢弃过期回调（防止重叠平面）
         if ((this.game.gridN || GRID) !== expectKey) return;  // 地图尺寸已变
         tex.anisotropy = 4;
