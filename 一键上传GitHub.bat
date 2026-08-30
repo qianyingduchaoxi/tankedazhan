@@ -1,105 +1,107 @@
 @echo off
-chcp 65001 >nul
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
 echo ============================================
-echo    å¦å…‹å¤§æˆ˜ - GitHub ä¸€é”®ä¸Šä¼ è„šæœ¬
+echo    Ì¹¿Ë´óÕ½ - GitHub Ò»¼üÉÏ´«½Å±¾
 echo ============================================
 echo.
 
-rem ===== 1. å®šä½ Git =====
-set "GIT=git"
-where git >nul 2>nul
-if errorlevel 1 (
-  if exist "C:\Program Files\Git\cmd\git.exe" (
-    set "GIT=C:\Program Files\Git\cmd\git.exe"
-  ) else if exist "C:\Program Files (x86)\Git\cmd\git.exe" (
-    set "GIT=C:\Program Files (x86)\Git\cmd\git.exe"
-  ) else if exist "%LOCALAPPDATA%\Programs\Git\cmd\git.exe" (
-    set "GIT=%LOCALAPPDATA%\Programs\Git\cmd\git.exe"
-  ) else (
-    echo [é”™è¯¯] æ²¡æ‰¾åˆ° Gitï¼Œè¯·å…ˆå®‰è£…ï¼šhttps://git-scm.com/download/win
-    pause
-    exit /b 1
-  )
+rem ===== 1. ¶¨Î» Git£¨°²×°°æ»òÄ¬ÈÏ°²×°Â·¾¶£©=====
+set "GIT="
+if exist "%LOCALAPPDATA%\Programs\Git\cmd\git.exe" set "GIT=%LOCALAPPDATA%\Programs\Git\cmd\git.exe"
+if not defined GIT if exist "C:\Program Files\Git\cmd\git.exe" set "GIT=C:\Program Files\Git\cmd\git.exe"
+if not defined GIT if exist "C:\Program Files (x86)\Git\cmd\git.exe" set "GIT=C:\Program Files (x86)\Git\cmd\git.exe"
+if not defined GIT (
+  for /f "delims=" %%i in ('where git 2^>nul') do if not defined GIT set "GIT=%%i"
 )
+if not defined GIT (
+  echo [´íÎó] Ã»ÕÒµ½ Git£¬ÇëÏÈ°²×°£ºhttps://git-scm.com/download/win
+  echo.
+  pause
+  exit /b 1
+)
+echo Ê¹ÓÃ Git: "!GIT!"
+"!GIT!" --version
+echo.
 
-rem ===== 2. åˆå§‹åŒ–ä»“åº“ =====
+rem ===== 2. ³õÊ¼»¯²Ö¿â =====
 if not exist ".git" (
-  echo [1/5] åˆå§‹åŒ– Git ä»“åº“...
-  "%GIT%" init -b main
+  echo [1/5] ³õÊ¼»¯ Git ²Ö¿â...
+  "!GIT!" init -b main
 ) else (
-  echo [1/5] å·²åœ¨ Git ä»“åº“ä¸­ã€‚
+  echo [1/5] ÒÑÔÚ Git ²Ö¿âÖĞ¡£
 )
 
-rem ===== 3. æäº¤èº«ä»½ï¼ˆä»…æœ¬æœºæœªé…ç½®æ—¶å…œåº•ï¼Œåªå½±å“æœ¬ä»“åº“ï¼‰ =====
-"%GIT%" config user.email >nul 2>nul
+rem ===== 3. Ìá½»Éí·İ£¨½ö±¾»úÎ´ÅäÖÃÊ±¶µµ×£¬Ö»Ó°Ïì±¾²Ö¿â£©=====
+"!GIT!" config user.email >nul 2>nul
 if errorlevel 1 (
-  "%GIT%" config user.name "LYD"
-  "%GIT%" config user.email "lyd-tank@users.noreply.github.com"
-  echo       æœªæ£€æµ‹åˆ° Git èº«ä»½ï¼Œå·²ç”¨é»˜è®¤èº«ä»½ LYDã€‚
+  "!GIT!" config user.name "LYD"
+  "!GIT!" config user.email "lyd-tank@users.noreply.github.com"
+  echo       Î´¼ì²âµ½ Git Éí·İ£¬ÒÑÓÃÄ¬ÈÏÉí·İ LYD¡£
 )
 
-rem ===== 4. æäº¤æ‰€æœ‰æ–‡ä»¶ =====
-echo [2/5] æäº¤æ¸¸æˆæ–‡ä»¶...
-"%GIT%" add -A
-"%GIT%" rev-parse HEAD >nul 2>nul
+rem ===== 4. Ìá½»ËùÓĞÎÄ¼ş =====
+echo [2/5] Ìá½»ÓÎÏ·ÎÄ¼ş...
+"!GIT!" add -A
+"!GIT!" rev-parse HEAD >nul 2>nul
 if errorlevel 1 (
-  "%GIT%" commit -m "å¦å…‹å¤§æˆ˜æ¸¸æˆé¦–æ¬¡å‘å¸ƒ"
+  "!GIT!" commit -m "Ì¹¿Ë´óÕ½ÓÎÏ·Ê×´Î·¢²¼"
 ) else (
-  "%GIT%" diff --cached --quiet
-  if errorlevel 1 (
-    "%GIT%" commit -m "æ›´æ–°æ¸¸æˆ %date%"
+  "!GIT!" diff --cached --quiet
+  if not errorlevel 1 (
+    echo       Ã»ÓĞÎÄ¼ş±ä»¯£¬Ìø¹ıÌá½»¡£
   ) else (
-    echo       æ²¡æœ‰æ–‡ä»¶å˜åŒ–ï¼Œè·³è¿‡æäº¤ã€‚
+    "!GIT!" commit -m "¸üĞÂÓÎÏ· %date%"
   )
 )
 
-rem ===== 5. é…ç½®è¿œç¨‹ä»“åº“ï¼ˆé¦–æ¬¡è¿è¡Œéœ€è¦ï¼‰ =====
-"%GIT%" remote get-url origin >nul 2>nul
+rem ===== 5. ÅäÖÃÔ¶³Ì²Ö¿â£¨Ê×´ÎÔËĞĞĞèÒª£©=====
+"!GIT!" remote get-url origin >nul 2>nul
 if errorlevel 1 (
-  echo [3/5] è¯·å…ˆåœ¨ GitHub åˆ›å»ºä¸€ä¸ªç©ºä»“åº“ï¼š
-  echo   - æµè§ˆå™¨å³å°†æ‰“å¼€ https://github.com/new
-  echo   - Repository name å»ºè®®å¡«: tankedazhan
-  echo   - é€‰æ‹© Privateï¼ˆç§æœ‰ï¼‰
-  echo   - ã€ä¸è¦ã€‘å‹¾é€‰ Add README / .gitignore / license
-  echo   - ç‚¹ Create repository åï¼Œå¤åˆ¶æµè§ˆå™¨åœ°å€æ é‡Œçš„ä»“åº“åœ°å€
+  echo [3/5] ÇëÏÈÔÚ GitHub ´´½¨Ò»¸ö¿Õ²Ö¿â£º
+  echo   - ä¯ÀÀÆ÷¼´½«´ò¿ª https://github.com/new
+  echo   - Repository name ½¨ÒéÌî: tankedazhan
+  echo   - Ñ¡Ôñ Private£¨Ë½ÓĞ£©
+  echo   - ×¢Òâ£º²»Òª¹´Ñ¡ Add README / .gitignore / license
+  echo   - µã Create repository ºó£¬¸´ÖÆä¯ÀÀÆ÷µØÖ·À¸ÀïµÄ²Ö¿âµØÖ·
   echo.
-  start https://github.com/new
-  set /p "REPO_URL=ç²˜è´´ä»“åº“åœ°å€ï¼ˆå½¢å¦‚ https://github.com/ç”¨æˆ·å/tankedazhan.gitï¼‰åå›è½¦: "
+  start "" "https://github.com/new"
+  set /p "REPO_URL=Õ³Ìù²Ö¿âµØÖ·£¨ĞÎÈç https://github.com/ÓÃ»§Ãû/tankedazhan.git£©ºó»Ø³µ: "
   if "!REPO_URL!"=="" (
-    echo [é”™è¯¯] æœªè¾“å…¥åœ°å€ï¼Œå·²å–æ¶ˆã€‚é‡æ–°è¿è¡Œæœ¬è„šæœ¬å³å¯ã€‚
+    echo [´íÎó] Î´ÊäÈëµØÖ·£¬ÒÑÈ¡Ïû¡£ÖØĞÂÔËĞĞ±¾½Å±¾¼´¿É¡£
+    echo.
     pause
     exit /b 1
   )
-  "%GIT%" remote add origin "!REPO_URL!"
+  "!GIT!" remote add origin "!REPO_URL!"
 ) else (
-  echo [3/5] è¿œç¨‹ä»“åº“å·²é…ç½®ã€‚
+  echo [3/5] Ô¶³Ì²Ö¿âÒÑÅäÖÃ¡£
 )
 
-rem ===== 6. æ¨é€ =====
-echo [4/5] æ¨é€åˆ° GitHub...
-echo       é¦–æ¬¡æ¨é€ä¼šè‡ªåŠ¨å¼¹å‡ºæµè§ˆå™¨è¦æ±‚ç™»å½• GitHub å¹¶æˆæƒï¼Œè¯·æŒ‰æç¤ºå®Œæˆã€‚
-"%GIT%" branch -M main
-"%GIT%" push -u origin main
+rem ===== 6. ÍÆËÍ =====
+echo [4/5] ÍÆËÍµ½ GitHub...
+echo       Ê×´ÎÍÆËÍ»á×Ô¶¯µ¯³öä¯ÀÀÆ÷ÒªÇóµÇÂ¼ GitHub ²¢ÊÚÈ¨£¬Çë°´ÌáÊ¾Íê³É¡£
+"!GIT!" branch -M main
+"!GIT!" push -u origin main
 if errorlevel 1 (
   echo.
-  echo [å¤±è´¥] æ¨é€æœªæˆåŠŸï¼Œè¯·æŠŠçª—å£é‡Œçš„çº¢è‰²é”™è¯¯ä¿¡æ¯æˆªå›¾å‘æˆ‘ã€‚
+  echo [Ê§°Ü] ÍÆËÍÎ´³É¹¦£¬Çë°Ñ±¾´°¿ÚÀïµÄ´íÎóĞÅÏ¢½ØÍ¼·¢ÎÒ¡£
+  echo.
   pause
   exit /b 1
 )
 
 echo.
 echo [5/5] ============================================
-echo   ä¸Šä¼ æˆåŠŸï¼
+echo   ÉÏ´«³É¹¦£¡
 echo.
-echo   æƒ³è®©æœ‹å‹ç›´æ¥åœ¨æµè§ˆå™¨ç©ï¼ˆå¯é€‰ï¼‰ï¼š
-echo   1. æ‰“å¼€ GitHub ä¸Šä½ çš„ä»“åº“é¡µé¢ - Settings - Pages
-echo   2. Source é€‰ "Deploy from a branch"
-echo   3. Branch é€‰ main / (root)ï¼Œç‚¹ Save
-echo   4. ç­‰çº¦ 1 åˆ†é’Ÿåˆ·æ–°é¡µé¢ï¼Œå³å¯å¾—åˆ°ç½‘å€ï¼š
-echo      https://ä½ çš„ç”¨æˆ·å.github.io/tankedazhan/
+echo   ÏëÈÃÅóÓÑÖ±½ÓÔÚä¯ÀÀÆ÷Íæ£¨¿ÉÑ¡£©£º
+echo   1. ´ò¿ª GitHub ÉÏÄãµÄ²Ö¿âÒ³Ãæ - Settings - Pages
+echo   2. Source Ñ¡ "Deploy from a branch"
+echo   3. Branch Ñ¡ main / (root)£¬µã Save
+echo   4. µÈÔ¼ 1 ·ÖÖÓË¢ĞÂÒ³Ãæ£¬¼´¿ÉµÃµ½ÍøÖ·£º
+echo      https://ÄãµÄÓÃ»§Ãû.github.io/tankedazhan/
 echo ============================================
 echo.
 pause
