@@ -277,33 +277,30 @@ class AudioManager {
                                     this.musicGain.connect(this.masterGain);
                                     this.sfxGain.connect(this.masterGain);
                                     this.refreshGains(); }catch(e){} }
-            this._loadSfx();
+            this._ensureVoice();
             this.startMusic();
   }
-  // 彩蛋语音：拾取=「晚安」/ 受击=「你干嘛」（Web Audio 解码缓存；加载失败静默降级电子音/TTS）
-  _loadSfx(){
-    if (this._sfxLoading || !this.ctx) return;
-    this._sfxLoading = true;
-    const decode = async (url)=>{
-      try{
-        const r = await fetch(url);
-        if (!r.ok) return null;
-        const data = await r.arrayBuffer();
-        return await this.ctx.decodeAudioData(data);
-      }catch(e){ return null; }
-    };
-    decode('audio/pickup.mp3').then(b=>{ this._bufPickup = b; });
-    decode('audio/hurt.mp3').then(b=>{ this._bufHurt = b; });
-  }
-  _playBuf(buf, vol=0.8){
-    if (!this.ctx || !buf) return false;
+  // 彩蛋语音：拾取=「晚安」/ 受击=「你干嘛」
+  // 用 HTMLAudio 媒体元素播放（双击 index.html 的 file:// 协议下 fetch 会被 CORS 拦截，
+  // 但媒体元素可正常播放本地 mp3；http(s) 下同样工作）
+  _ensureVoice(){
+    if (this._voiceReady) return;
+    this._voiceReady = true;
     try{
-      const src = this.ctx.createBufferSource();
-      src.buffer = buf;
-      const g = this.ctx.createGain();
-      g.gain.value = vol;
-      src.connect(g); g.connect(this.sfxGain);
-      src.start();
+      this._voicePickup = new Audio('audio/pickup.mp3');
+      this._voicePickup.preload = 'auto';
+      this._voiceHurt = new Audio('audio/hurt.mp3');
+      this._voiceHurt.preload = 'auto';
+    }catch(e){ this._voicePickup = null; this._voiceHurt = null; }
+  }
+  _playVoice(baseEl, vol){
+    if (!baseEl) return false;
+    try{
+      const a = baseEl.cloneNode ? baseEl.cloneNode(true) : baseEl;
+      const m = (SM.s.volMaster||0)/100, s = (SM.s.volSfx||0)/100;
+      a.volume = Math.max(0, Math.min(1, vol * m * s * 2.2));
+      const p = a.play();
+      if (p && p.catch) p.catch(()=>{});
       return true;
     }catch(e){ return false; }
   }
@@ -441,9 +438,9 @@ class AudioManager {
     });
   }
   // 玩家彩蛋：拾取武器/强化包时播放「晚安」语音（鸡你太美梗）
-  // 优先播放 mp3；mp3 未就绪/失败时回落 TTS"鸡"，再不济回落电子音阶
+  // 优先播放 mp3（媒体元素，file/http 均可）；失败时回落 TTS"鸡"，再不济回落电子音阶
   ji(){
-    if (this._playBuf(this._bufPickup)) return;
+    if (this._playVoice(this._voicePickup, 0.9)) return;
     if (this._sayJi()) return;
     this.pick('weapon');
   }
@@ -474,11 +471,11 @@ class AudioManager {
     o.connect(g); g.connect(out); o.start(t); o.stop(t+0.1);
   }
   hurt(){
-    // 玩家被攻击：优先播「你干嘛」语音（0.35s 节流防止连击爆音）；未就绪时回落电子音
+    // 玩家被攻击：优先播「你干嘛」语音（1.2s 节流，语音较长避免重叠）；未就绪时回落电子音
     const now = performance.now();
-    if (!this._lastHurtT || now - this._lastHurtT > 350){
+    if (!this._lastHurtT || now - this._lastHurtT > 1200){
       this._lastHurtT = now;
-      if (this._playBuf(this._bufHurt, 0.9)) return;
+      if (this._playVoice(this._voiceHurt, 1.0)) return;
     }
     if(!this.ctx) return;
     const ctx=this.ctx, out=this.sfxGain; const t=ctx.currentTime;
