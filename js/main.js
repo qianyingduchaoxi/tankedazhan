@@ -2160,8 +2160,7 @@ class Game {
     this.state = STATE.GAME_OVER;
     AM.gameOver();
     UI.showResult('gameover', { score: this.score, level: this.levelIdx+1, kills: this.enemiesKilledTotal, reason: '坦克被击毁' });
-    // 保存排行榜
-    LB.commit(this.difficulty, this.score);
+    // 排行榜保存统一由 UI.showResult 处理（避免重复提交）
   }
 
   nextLevel(){
@@ -4046,11 +4045,15 @@ class ThreeRenderer {
    ============================================================ */
 const LB = {
   KEY:'xhjs_lb_v1',
-  all(){ return loadLocal(this.KEY, { low:[], mid:[], high:[] }); },
+  all(){ return loadLocal(this.KEY, { low:[], mid:[], high:[], super:[] }); },
   commit(diff, score){
+    score = Math.max(0, Math.floor(Number(score)||0));
     const all = this.all();
     all[diff] = all[diff] || [];
-    all[diff].push({ score, date: new Date().toISOString().slice(0,10) });
+    const date = new Date().toISOString().slice(0,10);
+    // 防重复：同一难度、同一分数、同一天且已存在相同记录 -> 跳过（避免一局多次提交）
+    if (all[diff].some(r => r.score === score && r.date === date)) { this.refresh(); return; }
+    all[diff].push({ score, date });
     all[diff].sort((a,b)=>b.score-a.score);
     all[diff] = all[diff].slice(0, 5);
     saveLocal(this.KEY, all);
@@ -4121,8 +4124,8 @@ const UI = {
       <div>最终分数：<b style="color:var(--c-gold); font-size:1.4rem; text-shadow:0 0 10px var(--c-gold);">${info.score}</b></div>
     `;
     rm.classList.remove('hidden');
-    // 保存
-    if (kind==='gameover') LB.commit(this.game.difficulty, this.game.score);
+    // 保存排行榜：失败(gameover)与最终胜利(victory)都结算；过关(clear)继续战斗不结算
+    if (kind==='gameover' || kind==='victory') LB.commit(this.game.difficulty, this.game.score);
   },
   showToast: (t,c,m)=> game && game.showToast(t,c,m),
   showPerfTip(){
