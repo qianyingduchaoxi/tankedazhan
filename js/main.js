@@ -543,6 +543,19 @@ class AudioManager {
   }
   // 触觉振动（手机）
   vibrate(ms=20){ if (SM.s.haptic && 'vibrate' in navigator) { try{ navigator.vibrate(ms); }catch(e){} } }
+  // 标签页切到后台/最小化：冻结音频并停止 BGM 循环（彻底静音，防止关了页面还有声音）
+  onHidden(){
+    if (!this.ctx) return;
+    this.musicStarted = false;
+    try{ if (this.ctx.state === 'running') this.ctx.suspend(); }catch(e){}
+  }
+  // 标签页回到前台：恢复音频与 BGM
+  onVisible(){
+    if (!this.ctx) return;
+    try{ if (this.ctx.state === 'suspended') this.ctx.resume(); }catch(e){}
+    this.musicStarted = false;
+    this.startMusic();
+  }
 }
 const AM = new AudioManager();
 
@@ -4385,6 +4398,16 @@ function boot(){
   }catch(e){ /* 隐私模式等场景忽略 */ }
   UI.buildSettings();
   UI.buildMainMenu();
+
+  // 标签页切走/最小化时自动暂停游戏并静音，回到前台时恢复（避免后台标签页持续播放 BGM）
+  document.addEventListener('visibilitychange', ()=>{
+    if (document.hidden){
+      if (game && game.state === STATE.PLAYING){ try{ UI.pause(); }catch(e){} }
+      AM.onHidden();
+    } else {
+      AM.onVisible();
+    }
+  });
 
   waitThreeReady(()=>{
     if (game.threeEnabled){
